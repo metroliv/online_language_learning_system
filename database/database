@@ -1,0 +1,39 @@
+CREATE TABLE users (
+    user_id INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(100),
+    email VARCHAR(100) UNIQUE,
+    password VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TABLE languages (
+    lang_id INT PRIMARY KEY AUTO_INCREMENT,
+    lang_name VARCHAR(50)
+);
+CREATE TABLE lessons (
+    lesson_id INT PRIMARY KEY AUTO_INCREMENT,
+    lang_id INT,
+    title VARCHAR(255),
+    content TEXT,
+    audio_link VARCHAR(255), 
+    FOREIGN KEY (lang_id) REFERENCES languages(lang_id)
+);
+CREATE TABLE quizzes (
+    quiz_id INT PRIMARY KEY AUTO_INCREMENT,
+    lesson_id INT,
+    question TEXT,
+    option_a VARCHAR(255),
+    option_b VARCHAR(255),
+    option_c VARCHAR(255),
+    option_d VARCHAR(255),
+    correct_option CHAR(1),
+    FOREIGN KEY (lesson_id) REFERENCES lessons(lesson_id)
+);
+CREATE TABLE user_progress (
+    progress_id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT,
+    lesson_id INT,
+    status ENUM('Completed', 'In Progress'),
+    score INT DEFAULT 0,
+    FOREIGN KEY (user_id) REFERENCES users(user_id),
+    FOREIGN KEY (lesson_id) REFERENCES lessons(lesson_id)
+);
