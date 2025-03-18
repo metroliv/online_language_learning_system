@@ -1,6 +1,7 @@
 <?php
 include '../config/config.php';
 include '../config/auth.php';
+include('../partials/head.php');
 
 if (!isset($_GET['lesson_id']) || empty($_GET['lesson_id'])) {
     die("Error: Lesson not selected!");
@@ -22,10 +23,7 @@ while ($quiz = mysqli_fetch_assoc($quizzes_result)) {
     $quizzes[] = $quiz;
 }
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <title>Lesson Quiz</title>
+
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -41,8 +39,27 @@ while ($quiz = mysqli_fetch_assoc($quizzes_result)) {
         .hidden { display: none; }
     </style>
 </head>
-<body class="container mt-5">
-    <div class="quiz-container">
+<body class="hold-transition sidebar-mini layout-fixed">
+	<div class="wrapper">
+
+		<!-- Preloader -->
+		<?php include('../partials/preloader.php'); ?>
+
+		<!-- Navbar -->
+		<?php include('../partials/header.php'); ?>
+		<!-- /.navbar -->
+
+		<!-- Main Sidebar Container -->
+		<?php
+		/* Load Specific side Based On User Access Level */
+		
+			/* Admin */
+			include('../partials/admin_sidenav1.php');
+	
+		 ?>
+
+		<!-- Content Wrapper. Contains page content -->
+		<div class="content-wrapper">
         <h2 class="text-center">Lesson Quiz</h2>
         <div id="timer" class="text-end text-danger fw-bold">Time Left: <span id="time">60</span> sec</div>
         
@@ -51,7 +68,7 @@ while ($quiz = mysqli_fetch_assoc($quizzes_result)) {
             
             <div id="quizContent">
                 <?php foreach ($quizzes as $index => $quiz): ?>
-                    <div class="quiz-question hidden" id="question_<?php echo $index; ?>">
+                    <div class="quiz-question hidden" id="question_<?php echo $index; ?>" required>
                         <p><strong><?php echo htmlspecialchars($quiz['question']); ?></strong></p>
                         <input type="radio" name="quiz[<?php echo $quiz['quiz_id']; ?>]" value="A"> <?php echo htmlspecialchars($quiz['option_a']); ?><br>
                         <input type="radio" name="quiz[<?php echo $quiz['quiz_id']; ?>]" value="B"> <?php echo htmlspecialchars($quiz['option_b']); ?><br>

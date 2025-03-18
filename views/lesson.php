@@ -1,6 +1,7 @@
 <?php
 include '../config/config.php';
 include '../config/auth.php';
+include('../partials/head.php');
 
 if (!isset($_GET['lesson_id'])) {
     die("Lesson not selected!");
@@ -18,48 +19,27 @@ if (!$lesson) {
 }
 ?>
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <title><?php echo htmlspecialchars($lesson['title']); ?></title>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <style>
-        body {
-            background-color: #f8f9fa;
-            font-family: 'Arial', sans-serif;
-        }
-        .lesson-container {
-            max-width: 800px;
-            margin: auto;
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
-        .lesson-title {
-            font-weight: bold;
-            color: #007bff;
-            text-align: center;
-        }
-        .lesson-content {
-            font-size: 18px;
-            line-height: 1.6;
-        }
-        .btn-custom {
-            transition: all 0.3s ease-in-out;
-        }
-        .btn-custom:hover {
-            transform: scale(1.05);
-        }
-    </style>
-</head>
-<body>
+<body class="hold-transition sidebar-mini layout-fixed">
+	<div class="wrapper">
 
-    <div class="container mt-5">
-        <div class="lesson-container">
+		<!-- Preloader -->
+		<?php include('../partials/preloader.php'); ?>
+
+		<!-- Navbar -->
+		<?php include('../partials/header.php'); ?>
+		<!-- /.navbar -->
+
+		<!-- Main Sidebar Container -->
+		<?php
+		/* Load Specific side Based On User Access Level */
+		
+			/* Admin */
+			include('../partials/admin_sidenav1.php');
+	
+		 ?>
+
+		<!-- Content Wrapper. Contains page content -->
+		<div class="content-wrapper">
             <h2 class="lesson-title"><?php echo htmlspecialchars($lesson['title']); ?></h2>
             <hr>
             <p class="lesson-content"><?php echo nl2br(htmlspecialchars($lesson['content'])); ?></p>

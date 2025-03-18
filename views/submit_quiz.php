@@ -1,7 +1,7 @@
 <?php
-
 include '../config/config.php';
 include '../config/auth.php';
+include('../partials/head.php');
 
 if (!isset($_POST['lesson_id']) || !isset($_POST['quiz'])) {
     die("Error: Missing lesson_id or quiz answers.");

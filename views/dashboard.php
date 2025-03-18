@@ -2,6 +2,7 @@
 include '../config/config.php';
 include '../config/auth.php';
 include('../partials/head.php');
+require_once('../partials/alert.php');
 
 // Fetch user data
 $user_name = $_SESSION['user_name'];
@@ -26,14 +27,6 @@ $query = "SELECT lessons.title, lessons.lesson_id, user_progress.score, user_pro
 $result = mysqli_query($db, $query);
 ?>
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <title>Dashboard</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-    
-    
-</head>
 <body class="hold-transition sidebar-mini layout-fixed">
 	<div class="wrapper">
 

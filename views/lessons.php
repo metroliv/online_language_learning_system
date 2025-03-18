@@ -1,6 +1,7 @@
 <?php
 include '../config/config.php';
 include '../config/auth.php';
+include('../partials/head.php');
 
 if (!isset($_GET['lang_id'])) {
     die("Language not selected!");
@@ -22,13 +23,27 @@ $lessons_query = "SELECT * FROM lessons WHERE lang_id = $lang_id";
 $lessons_result = mysqli_query($db, $lessons_query);
 ?>
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <title><?php echo htmlspecialchars($lang['lang_name']); ?> Lessons</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-</head>
-<body class="container mt-5">
+<body class="hold-transition sidebar-mini layout-fixed">
+	<div class="wrapper">
+
+		<!-- Preloader -->
+		<?php include('../partials/preloader.php'); ?>
+
+		<!-- Navbar -->
+		<?php include('../partials/header.php'); ?>
+		<!-- /.navbar -->
+
+		<!-- Main Sidebar Container -->
+		<?php
+		/* Load Specific side Based On User Access Level */
+		
+			/* Admin */
+			include('../partials/admin_sidenav1.php');
+	
+		 ?>
+
+		<!-- Content Wrapper. Contains page content -->
+		<div class="content-wrapper">
 
     <h2><?php echo htmlspecialchars($lang['lang_name']); ?> Lessons</h2>
     <p>Select a lesson to begin:</p>
@@ -44,6 +59,7 @@ $lessons_result = mysqli_query($db, $lessons_query);
     </ul>
 
     <a href="dashboard.php" class="btn btn-secondary mt-3">Back to Dashboard</a>
-
+        </div>
+        </div>
 </body>
 </html>
