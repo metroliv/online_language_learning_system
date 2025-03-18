@@ -1,0 +1,10 @@
+{
+    "require": {
+        "cloudinary/cloudinary_php": "^2",
+        "crunzphp/crunz": "^3.4",
+        "symfony/scheduler": "^7.1",
+        "dompdf/dompdf": "^3.0",
+        "simple-html-dom/simple-html-dom": "^1.5",
+        "phpmailer/phpmailer": "^6.9"
+    }
+}

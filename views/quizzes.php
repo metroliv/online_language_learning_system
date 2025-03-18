@@ -22,13 +22,13 @@ while ($quiz = mysqli_fetch_assoc($quizzes_result)) {
     $quizzes[] = $quiz;
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <title>Lesson Quiz</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         .quiz-container {
             max-width: 600px;
@@ -38,8 +38,6 @@ while ($quiz = mysqli_fetch_assoc($quizzes_result)) {
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
-        .correct { color: green; }
-        .wrong { color: red; }
         .hidden { display: none; }
     </style>
 </head>
@@ -59,7 +57,6 @@ while ($quiz = mysqli_fetch_assoc($quizzes_result)) {
                         <input type="radio" name="quiz[<?php echo $quiz['quiz_id']; ?>]" value="B"> <?php echo htmlspecialchars($quiz['option_b']); ?><br>
                         <input type="radio" name="quiz[<?php echo $quiz['quiz_id']; ?>]" value="C"> <?php echo htmlspecialchars($quiz['option_c']); ?><br>
                         <input type="radio" name="quiz[<?php echo $quiz['quiz_id']; ?>]" value="D"> <?php echo htmlspecialchars($quiz['option_d']); ?><br>
-                        <p class="feedback hidden"></p>
                     </div>
                 <?php endforeach; ?>
             </div>
@@ -76,7 +73,7 @@ while ($quiz = mysqli_fetch_assoc($quizzes_result)) {
         let currentQuestion = 0;
         let totalQuestions = <?php echo count($quizzes); ?>;
         let timer = 60;
-        
+
         function showQuestion(index) {
             $(".quiz-question").addClass("hidden");
             $(`#question_${index}`).removeClass("hidden");
@@ -84,19 +81,26 @@ while ($quiz = mysqli_fetch_assoc($quizzes_result)) {
             $("#nextBtn").toggleClass("hidden", index === totalQuestions - 1);
             $("#submitBtn").toggleClass("hidden", index !== totalQuestions - 1);
         }
-        
+
         function startTimer() {
             let interval = setInterval(() => {
                 if (timer <= 0) {
                     clearInterval(interval);
-                    alert("Time's up! Submitting your answers.");
-                    $("#quizForm").submit();
+                    Swal.fire({
+                        icon: "warning",
+                        title: "Time's up!",
+                        text: "Your quiz is being submitted.",
+                        showConfirmButton: false,
+                        timer: 2000
+                    }).then(() => {
+                        $("#quizForm").submit();
+                    });
                 }
                 $("#time").text(timer);
                 timer--;
             }, 1000);
         }
-        
+
         $(document).ready(() => {
             showQuestion(0);
             startTimer();
@@ -113,6 +117,34 @@ while ($quiz = mysqli_fetch_assoc($quizzes_result)) {
                     currentQuestion--;
                     showQuestion(currentQuestion);
                 }
+            });
+
+            // Handle form submission via AJAX
+            $("#quizForm").submit(function(e) {
+                e.preventDefault();
+                
+                $.ajax({
+                    type: "POST",
+                    url: "submit_quiz.php",
+                    data: $(this).serialize(),
+                    success: function(response) {
+                        Swal.fire({
+                            icon: "success",
+                            title: "Quiz Submitted",
+                            text: "Your answers have been submitted successfully!",
+                            confirmButtonText: "OK"
+                        }).then(() => {
+                            window.location.href = "submit_quiz.php";
+                        });
+                    },
+                    error: function() {
+                        Swal.fire({
+                            icon: "error",
+                            title: "Submission Failed",
+                            text: "An error occurred. Please try again."
+                        });
+                    }
+                });
             });
         });
     </script>

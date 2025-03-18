@@ -1,0 +1,155 @@
+<?php
+require_once('../config/config.php');
+require_once('../vendor/autoload.php'); // For dompdf
+
+use Dompdf\Dompdf;
+use Dompdf\Options;
+
+// Start the session to track user info if needed
+session_start();
+
+$type = isset($_GET['type']) ? $_GET['type'] : '';
+
+// Common database queries for both CSV and PDF
+$wards_query = "SELECT ward_id, ward_name FROM ward";
+$wards_result = $mysqli->query($wards_query);
+$wards = [];
+while ($row = $wards_result->fetch_assoc()) {
+    $wards[] = $row;
+}
+
+$targets_query = "SELECT 
+    st.streamtarget_ward_id,
+    w.ward_name,
+    SUM(st.streamtarget_amount) AS total_target
+FROM streamtarget st
+JOIN ward w ON st.streamtarget_ward_id = w.ward_id
+GROUP BY st.streamtarget_ward_id, w.ward_name";
+$targets_result = $mysqli->query($targets_query);
+$targets = [];
+while ($row = $targets_result->fetch_assoc()) {
+    $targets[$row['streamtarget_ward_id']] = $row['total_target'];
+}
+
+$collections_query = "
+    SELECT
+        collection_ward_id,
+        SUM(collection_amount) AS total_collected
+    FROM revenue_collections
+    WHERE collection_status = 'Approved'
+    GROUP BY collection_ward_id
+";
+$collections_result = $mysqli->query($collections_query);
+$collections = [];
+while ($row = $collections_result->fetch_assoc()) {
+    $collections[$row['collection_ward_id']] = $row['total_collected'];
+}
+
+// Handle CSV Export
+if ($type == 'csv') {
+    header('Content-Type: text/csv');
+    header('Content-Disposition: attachment; filename="ward_performance.csv"');
+    
+    $output = fopen('php://output', 'w');
+    fputcsv($output, ['Ward', 'Target Amount (KSh)', 'Total Collected (KSh)', 'Percentage Achieved']);
+    
+    foreach ($wards as $ward) {
+        $ward_id = $ward['ward_id'];
+        $ward_name = $ward['ward_name'];
+        $target = $targets[$ward_id] ?? 0;
+        $collected = $collections[$ward_id] ?? 0;
+        $percentage = ($target == 0) ? 0 : ($collected / $target) * 100;
+
+        fputcsv($output, [
+            $ward_name,
+            number_format($target),
+            number_format($collected),
+            number_format($percentage, 2) . '%'
+        ]);
+    }
+    fclose($output);
+    exit;
+}
+
+// Handle PDF Export
+elseif ($type == 'pdf') {
+    $options = new Options();
+    $options->set('isHtml5ParserEnabled', true);
+    $options->set('isRemoteEnabled', true);
+    $dompdf = new Dompdf($options);
+
+    // Path to the image (adjust the path based on your directory structure)
+    $imagePath = '../public/img/treasury-letter_head.png'; // Adjust this path as needed
+
+    // Check if the image file exists
+    if (file_exists($imagePath)) {
+        // Get the file type and content
+        $imageType = pathinfo($imagePath, PATHINFO_EXTENSION);
+        $imageData = file_get_contents($imagePath);
+        // Encode the image in base64 for embedding in the HTML
+        $base64Image = 'data:image/' . $imageType . ';base64,' . base64_encode($imageData);
+    } else {
+        die('Image file not found at: ' . realpath($imagePath));
+    }
+
+    // Get the current timestamp and username from the session (if available)
+    $timestamp = date('Y-m-d H:i:s');
+    $username = isset($_SESSION['user_names']) ? $_SESSION['user_names'] : 'Unknown User';
+
+    // Build the HTML content for the PDF
+    $html = '<html><head>';
+    $html .= '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css">';
+    $html .= '</head><body>';
+    $html .= '<div class="container">';
+
+    // Insert the header image at the top of the PDF
+    $html .= '<div style="text-align: center; margin-bottom: 20px;">';
+    $html .= '<img src="' . $base64Image . '" style="width: 100%; max-width: 600px; height: auto;">';
+    $html .= '</div>';
+
+    // Add the report title and the date period
+    $html .= '<h2 style="text-align: center;">Ward Performance Overview</h2>';
+    $html .= '<p><strong>Generated on:</strong> ' . htmlspecialchars($timestamp) . '</p>';
+
+    // Add the table with performance data
+    $html .= '<hr />';
+    $html .= '<table class="table table-bordered">';
+    $html .= '<thead><tr><th>Ward</th><th>Target Amount (KSh)</th><th>Total Collected (KSh)</th><th>Percentage Achieved</th></tr></thead>';
+    $html .= '<tbody>';
+
+    foreach ($wards as $ward) {
+        $ward_id = $ward['ward_id'];
+        $ward_name = $ward['ward_name'];
+        $target = $targets[$ward_id] ?? 0;
+        $collected = $collections[$ward_id] ?? 0;
+        $percentage = ($target == 0) ? 0 : ($collected / $target) * 100;
+
+        $html .= '<tr>';
+        $html .= '<td>' . htmlspecialchars($ward_name) . '</td>';
+        $html .= '<td>' . number_format($target) . '</td>';
+        $html .= '<td>' . number_format($collected) . '</td>';
+        $html .= '<td>' . number_format($percentage, 2) . '%</td>';
+        $html .= '</tr>';
+    }
+
+    $html .= '</tbody></table>';
+    $html .= '<hr />';
+
+    // Display the generated by and timestamp
+    $html .= '<p style="text-align: right;">Generated by: ' . htmlspecialchars($username) . '</p>';
+    $html .= '<p style="text-align: right;">Timestamp: ' . htmlspecialchars($timestamp) . '</p>';
+
+    $html .= '</div>';
+    $html .= '</body></html>';
+
+    // Load HTML to Dompdf
+    $dompdf->loadHtml($html);
+    $dompdf->setPaper('A4', 'portrait');
+    $dompdf->render();
+
+    // Stream the generated PDF to the browser
+    $dompdf->stream('ward_performance.pdf', ['Attachment' => 1]);
+    exit;
+} else {
+    echo 'Invalid type';
+}
